@@ -25,11 +25,12 @@ CPPFLAGS := -nostdinc -D_LANGUAGE_C -DMIPS -DF3DEX_GBI -I include -I include/dum
 			-I dk64_decomp/include -I dk64_decomp/include/2.0L
 LDFLAGS  := -nostdlib -T $(LDSCRIPT) -Map $(BUILD_DIR)/mod.map --unresolved-symbols=ignore-all --emit-relocs -e 0 --no-nmagic
 
-C_SRCS := $(wildcard src/*.c)
+rwildcard = $(wildcard $1$2) $(foreach d,$(wildcard $1*),$(if $(wildcard $d/),$(call rwildcard,$d/,$2)))
+C_SRCS := $(call rwildcard,src/,*.c)
 C_OBJS := $(addprefix $(BUILD_DIR)/, $(C_SRCS:.c=.o))
-C_DEPS := $(addprefix $(BUILD_DIR)/, $(C_SRCS:.c=.d))
+C_DEPS := $(addprefix $(BUILD_DIR)/, $(C_DEPS:.c=.d))
 
-S_SRCS := $(wildcard src/*.s)
+S_SRCS := $(call rwildcard,src/,*.s)
 S_OBJS := $(addprefix $(BUILD_DIR)/, $(S_SRCS:.s=.o))
 
 all: $(TARGET)
@@ -37,17 +38,27 @@ all: $(TARGET)
 $(TARGET): $(C_OBJS) $(S_OBJS) $(LDSCRIPT) | $(BUILD_DIR)
 	$(LD) $(C_OBJS) $(S_OBJS) $(LDFLAGS) -o $@
 
-$(BUILD_DIR) $(BUILD_DIR)/src:
+$(BUILD_DIR):
 ifeq ($(OS),Windows_NT)
 	mkdir $(subst /,\,$@)
 else
 	mkdir -p $@
 endif
 
-$(C_OBJS): $(BUILD_DIR)/%.o : %.c | $(BUILD_DIR) $(BUILD_DIR)/src
+$(C_OBJS): $(BUILD_DIR)/%.o : %.c
+ifeq ($(OS),Windows_NT)
+	if not exist "$(subst /,\,$(dir $@))" mkdir "$(subst /,\,$(dir $@))"
+else
+	mkdir -p $(dir $@)
+endif
 	$(CC) $(CFLAGS) $(CPPFLAGS) $< -MMD -MF $(@:.o=.d) -c -o $@
 
-$(S_OBJS): $(BUILD_DIR)/%.o : %.s | $(BUILD_DIR) $(BUILD_DIR)/src
+$(S_OBJS): $(BUILD_DIR)/%.o : %.s
+ifeq ($(OS),Windows_NT)
+	if not exist "$(subst /,\,$(dir $@))" mkdir "$(subst /,\,$(dir $@))"
+else
+	mkdir -p $(dir $@)
+endif
 	$(CC) $(ASFLAGS) -I src -nostdinc -D_LANGUAGE_C -DMIPS -DF3DEX_GBI -I include -I include/dummy_headers -I dk64_decomp/include -I dk64_decomp/include/2.0L $< -c -o $@
 
 clean:
