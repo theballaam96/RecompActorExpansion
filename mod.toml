@@ -1,0 +1,16 @@
+[manifest]
+id = "asset_expansion"
+version = "1.0.0"
+display_name = "Asset Expansion"
+description = "Expand the ability to update assets past the limits of the vanilla game"
+short_description = "Expand the ability to update assets past the limits of the vanilla game"
+authors = [ "Ballaam" ]
+game_id = "dk64"
+minimum_recomp_version = "1.0.0"
+
+[inputs]
+elf_path = "build/mod.elf"
+mod_filename = "asset_expansion"
+func_reference_syms_file = "Dk64Syms/dump.toml"
+data_reference_syms_files = [ "Dk64Syms/data_dump.toml" ]
+additional_files = ["thumb.dds"]
