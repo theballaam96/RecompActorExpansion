@@ -65,6 +65,7 @@ typedef struct {
     u8 unkB;
 } Struct80675810;
 
+extern Struct80748D40 D_global_asm_80748D40[];
 extern Struct8074C604 D_global_asm_8074C604[];
 extern GlobalASMStruct53 D_global_asm_807FB930[];
 extern GlobalASMStruct55 D_global_asm_8074D0C4[];
@@ -110,6 +111,11 @@ void func_global_asm_80675DD0(Actor *arg0, Actor *arg1);
 s32 func_global_asm_80676220(s16 arg0);
 s32 func_global_asm_8067AF44(Actor *arg0);
 void playActorAnimation(Actor *arg0, s32 arg1);
+
+Struct8074C604 default_collision = {
+    .unk0 = NULL,
+    .unk4 = 0,
+};
 
 void actorAddToChain(ActorPayload *pl) {
     ActorPayload *curr;
@@ -239,106 +245,104 @@ RECOMP_PATCH void func_global_asm_806761EC(Actor *arg0) {
     }
 }
 
-RECOMP_PATCH s32 func_global_asm_80678050(u16 arg0) {
-    Actor *newActor;
-    u16 var_a1;
-    u16 var_a2;
-    u16 *var_v0;
-    u16 *var_v0_2;
-    u16 temp_t4;
-    u16 var_v1;
-    void **var_v1_2;
-    s32 *var_a0;
+s32 func_global_asm_80678050(u16 arg0);
+RECOMP_PATCH s32 func_global_asm_80678050(u16 actorType) {
+    u16 *aaDataIndices;
+    u16 *aaDataIndices_0;
+    void **aaDataPointer;
+    u8 *aaData;
+    Actor *actor;
+    u16 headerSize;
+    u16 dataSize;
     ActorPayload *pl;
     u16 interactable;
 
-    if (arg0 < FIRST_ACTOR) {
-        var_v0 = D_global_asm_8074E218[arg0];
-        var_v0_2 = var_v0;
-        interactable = D_global_asm_8074D624[arg0];
+    if (actorType < FIRST_ACTOR) {
+        aaDataIndices = D_global_asm_8074E218[actorType];
+        aaDataIndices_0 = aaDataIndices;
+        interactable = D_global_asm_8074D624[actorType];
     } else {
-        pl = getActorPayloadFromIndex(arg0);
+        pl = getActorPayloadFromIndex(actorType);
         if (pl) {
-            var_v0 = pl->aad_sizes;
-            var_v0_2 = var_v0;
+            aaDataIndices = pl->aad_sizes;
+            aaDataIndices_0 = aaDataIndices;
             interactable = pl->init_interaction;
         } else {
             return FALSE;
         }
     }
-    var_v1 = *var_v0;
-    var_a1 = 0x174;
-    var_a2 = 0;
-    while (var_v1 != 0) {
-        var_a2 += D_global_asm_8074DA58[var_v1];
-        var_v1 = var_v0[1];
-        var_a1 += 4;
-        var_v0++;
+    headerSize = 0x174;
+    dataSize = 0;
+    while (*aaDataIndices) {
+        dataSize += D_global_asm_8074DA58[*aaDataIndices];
+        headerSize += 4;
+        aaDataIndices++;
     }
-    // Align to next 8 byte boundary
-    var_a1 = (var_a1 + 7) & 0xFFF8;
-    newActor = _malloc((var_a2 + var_a1) & 0xFFFF);
-    if (newActor != NULL) {
-        func_global_asm_80611690(newActor); // Something with the heap
-        var_v1_2 = &newActor->additional_actor_data;
-        var_a0 = (s32*)((s32)&newActor + var_a1);
-        while (var_v0_2[0] != 0) {
-            *var_v1_2 = var_a0;
-            var_v1_2++;
-            temp_t4 = D_global_asm_8074DA58[var_v0_2[0]];
-            var_v0_2++;
-            var_a0 += temp_t4;
+    headerSize = ALIGN(headerSize, 8);
+    dataSize += headerSize;
+    actor = _malloc(dataSize);
+    if (actor != NULL) {
+        func_global_asm_80611690(actor);
+        aaDataIndices = aaDataIndices_0;
+        aaDataPointer = (void **)&actor->additional_actor_data;
+        aaData = (u8 *)actor + (s32)headerSize;
+        while (*aaDataIndices) {
+            *aaDataPointer = aaData;
+            aaDataPointer++;
+            aaData += D_global_asm_8074DA58[*aaDataIndices];
+            aaDataIndices++;
         }
-        newActor->collision_queue_pointer = NULL;
-        newActor->unk138 = -1;
-        newActor->noclip_byte = 2;
-        newActor->locked_to_pad = 0;
-        newActor->unkF8 = 0x50;
-        newActor->object_properties_bitfield = 0x58144;
-        newActor->unk64 = 0;
-        newActor->shadow_opacity = 0xFF;
-        newActor->unk58 = arg0;
+        actor->unk58 = actorType;
+        actor->collision_queue_pointer = NULL;
+        actor->unk138 = -1;
+        actor->noclip_byte = 2;
+        actor->locked_to_pad = FALSE;
+        actor->unkF8 = 0x50;
+        actor->object_properties_bitfield = 0x58144;
+        actor->unk64 = 0;
+        actor->shadow_opacity = 0xFF;
         if (D_global_asm_807FBB64 & 0x100) {
-            newActor->draw_distance = 2000;
+            actor->draw_distance = 2000;
         } else {
-            newActor->draw_distance = 500;
+            actor->draw_distance = 500;
         }
-        newActor->unk68 = 0;
-        newActor->unk156 = 0;
-        newActor->unk78 = 0;
-        newActor->unk6C = 1;
-        newActor->unk6A = 1;
-        newActor->unk132 = 1;
-        newActor->unk114 = NULL;
-        newActor->unk118 = 0;
-        newActor->unk11C = NULL;
-        newActor->unk6E[0] = -1;
-        newActor->unk70 = -1;
-        newActor->unk150 = NULL;
-        newActor->unk12C = -1;
-        newActor->unk124 = 0;
-        newActor->unk148[0] = 0;
-        newActor->unk148[1] = 0;
-        newActor->unkD4 = 0x80748D4A;
-        newActor->unk146 = -1;
-        newActor->unkDA = 0x400;
-        newActor->unkCC = 0;
-        newActor->unkCD = 0;
-        newActor->unk130 = 0;
-        newActor->unk131 = 0;
-        newActor->unk16D = 0xF;
-        newActor->unkCE = 0;
-        newActor->unkB0 = -1;
-        newActor->interactable = interactable;
-        newActor->unk54 = D_global_asm_807FBB38;
+        actor->unk68 = 0;
+        actor->unk156 = 0;
+        actor->unk78 = 0;
+        actor->unk6C = 1;
+        actor->unk6A = 1;
+        actor->unk132 = 1;
+        actor->unk114 = NULL;
+        actor->unk118 = NULL;
+        actor->unk11C = NULL;
+        actor->unk6E[0] = -1;
+        actor->unk70 = -1;
+        actor->unk150 = NULL;
+        actor->unk12C = -1;
+        actor->unk124 = NULL;
+        actor->unk148[0] = NULL;
+        actor->unk148[1] = NULL;
+        actor->unkD4 = &D_global_asm_80748D40[1];
+        actor->unk146_s16 = -1;
+        actor->interactable = interactable;
+        actor->unkDA = 0x400;
+        actor->unkCC = 0;
+        actor->unkCD = 0;
+        actor->unk130 = 0;
+        actor->unk131 = 0;
+        actor->unk16D = 0xF;
+        actor->unkCE = 0;
+        actor->unkB0 = -1;
+        
+        actor->unk54 = D_global_asm_807FBB38;
         D_global_asm_807FBB38++;
-        func_global_asm_8067AE90(newActor); // Add to actor list
-        func_global_asm_806761D0(newActor); // Set initial health
-        D_global_asm_807FB930[D_global_asm_807FBB34].unk0 = newActor;
+        func_global_asm_8067AE90(actor); /* Add to actor list */
+        func_global_asm_806761D0(actor); /* Set initial health */
+        D_global_asm_807FB930[D_global_asm_807FBB34].unk0 = actor;
         D_global_asm_807FB930[D_global_asm_807FBB34].unk4 = 0;
         D_global_asm_807FBB3E = D_global_asm_807FBB34;
         D_global_asm_807FBB34++;
-        gLastSpawnedActor = newActor;
+        gLastSpawnedActor = actor;
         return TRUE;
     }
     return FALSE;
@@ -437,6 +441,9 @@ Struct8074C604 *getActorCollisionData(u16 index) {
     }
     pl = getActorPayloadFromIndex(index);
     if (pl) {
+        if (pl->collision == NULL) {
+            return &default_collision;
+        }
         return pl->collision;
     }
     return NULL;

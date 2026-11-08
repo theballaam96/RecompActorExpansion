@@ -1103,6 +1103,18 @@ typedef struct {
     u8 unkFF;
 } CameraPaad;
 
+typedef struct {
+    s16 unk0;
+    u8 unk2;
+    u8 unk3;
+    u8 unk4;
+    u8 unk5;
+    u8 unk6;
+    u8 unk7;
+    u8 unk8;
+    u8 unk9;
+} Struct80748D40;
+
 struct actor {
     Actor_unk0* unk0;
     ActorAnimationState* animation_state;
@@ -1196,7 +1208,7 @@ struct actor {
     u8 unkD1; // Used
     u8 unkD2;
     u8 unkD3;
-    u32 unkD4;
+    Struct80748D40 *unkD4;
     s16 unkD8; // Used
     s16 unkDA; // Used
     s16 unkDC; // Used
