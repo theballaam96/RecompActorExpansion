@@ -1984,9 +1984,7 @@ struct ActorSpawner {
     s16 y_rotation; // At 0x1C
     u16 unk1E;
     f32 unk20; // At 0x20, Used
-    u8 pad24[0x32 - 0x24];
-    s16 unk32;
-    u8 pad34[0x44 - 0x34];
+    f32 unk24[8];
     Actor* tied_actor; // At 0x44
     u8 unk48; // Used
     u8 unk49;
@@ -1997,8 +1995,8 @@ struct ActorSpawner {
     f32 unk54;
     s16 unk58;
     s16 id; // At 0x5A
-    s32 (*unk5C)(s32); // At 0x5C
-    s32 (*drawing_code)(s32); // At 0x60
+    s32 (*unk5C)(ActorSpawner *); // At 0x5C
+    s32 (*drawing_code)(ActorSpawner *); // At 0x60
     ActorSpawner* previous_spawner; // At 0x64
     ActorSpawner* next_spawner; // At 0x68
     u8 pad6C[0x80 - 0x6C];
